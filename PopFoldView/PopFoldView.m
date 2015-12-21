@@ -22,16 +22,19 @@
 
 @property (nonatomic,strong) UIPanGestureRecognizer *panGr;
 
+@property (nonatomic,assign) CGFloat currentProgress;
+@property (nonatomic,assign) CGRect originFrame;
+
 @end
 
 @implementation PopFoldView
 
 - (void)initialize
 {
-    self.detailContentView = [[UIView alloc] initWithFrame:CGRectMake(0, -self.frame.size.height, self.frame.size.width, self.frame.size.height * 2)];
-    self.coverContentView = [[UIView alloc] initWithFrame:self.bounds];
-    self.topView = [[UIView alloc] initWithFrame:self.bounds];
-    self.bottomView = [[UIView alloc] initWithFrame:self.bounds];
+    _detailContentView = [[UIView alloc] initWithFrame:CGRectMake(0, -self.frame.size.height, self.frame.size.width, self.frame.size.height * 2)];
+    _coverContentView = [[UIView alloc] initWithFrame:self.bounds];
+    _topView = [[UIView alloc] initWithFrame:self.bounds];
+    _bottomView = [[UIView alloc] initWithFrame:self.bounds];
     
     [self addSubview:self.coverContentView];
     
@@ -39,7 +42,7 @@
     rotationAndPerspectiveTransform.m34 = 1.0 / -600;
     self.layer.sublayerTransform = rotationAndPerspectiveTransform;
     
-    self.panGr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
+    _panGr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
     [self addGestureRecognizer:self.panGr];
     
     [self setAnchorPoint:CGPointMake(0.5, 0) forView:self.topView];
@@ -50,71 +53,130 @@
 {
     if (panGr.state == UIGestureRecognizerStateBegan)
     {
-        BOOL isReverse = [self.subviews containsObject:self.detailContentView];
-        [self toggleFoldIsStart:YES isReverse:isReverse];
+        [self toggleFoldIsStart:YES isReverse:self.isDetailMode];
+        _originFrame = self.frame;
     }
     else if (panGr.state == UIGestureRecognizerStateChanged)
     {
         CGPoint translation = [panGr translationInView:self];
         CGFloat change = translation.y/self.frame.size.height;
-        if (change < 0)
-        {
-            [self animateProgress:fabs(change)];
-        }
-        else
-        {
-            change = 1.0 - change;
-            if (change > 0)
-            {
-                [self animateProgress:change];
-            }
-            //change > 1 且向下
-        }
+        [self animateProgress:(self.isDetailMode ? 1 - change: - change)];
     }
     else
     {
         CGPoint translation = [panGr translationInView:self];
         CGFloat change = translation.y/self.frame.size.height;
-        [self animateToEnd:(translation.y > 0)];
+        CGFloat progress = (self.isDetailMode ? 1 - change: - change);
+        if (progress < 0.001)
+        {
+            [self bounceToEnd:NO];
+            if (self.isDetailMode)
+            {
+                [self animateToEnd:NO];
+            }
+        }
+        else if (progress > 1.001)
+        {
+            [self bounceToEnd:YES];
+            if (!self.isDetailMode)
+            {
+                [self animateToEnd:YES];
+            }
+        }
+        else
+        {
+            [self animateToEnd:(translation.y < 0)];
+        }
     }
 }
 
-- (void)toggleFoldIsStart:(BOOL)isStart isReverse:(BOOL)isReverse
-{
-    if (isStart)
-    {
-        UIView *originView = (!isReverse ? self.coverContentView : self.detailContentView);
-        [originView removeFromSuperview];
-        [self addSubview:self.bottomView];
-        [self addSubview:self.topView];
-        UIImage *topViewImage = (isReverse ? self.detailTopImage : self.coverImage);
-        [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
-        [self.bottomView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
-    }
-    else
-    {
-        UIView *destinateView = (isReverse ? self.coverContentView : self.detailContentView);
-        [self addSubview:destinateView];
-        [self.bottomView removeFromSuperview];
-        [self.topView removeFromSuperview];
-    }
-}
 
 - (void)animateProgress:(CGFloat)progress
 {
-    self.topView.layer.transform = CATransform3DMakeRotation(M_PI * progress, 1.0, 0, 0);
-    UIImage *topViewImage = (progress > (0.5 - 0.055) ? self.detailTopImage : self.coverImage);
-    [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
+    if (progress < 0)
+    {
+        CGRect frame = self.originFrame;
+        frame.origin.y += fabs(progress * self.frame.size.height/3);
+        self.frame = frame;
+    }
+    else if (progress > 1)
+    {
+        CGRect frame = self.originFrame;
+        frame.origin.y -= fabs((progress - 1) * self.frame.size.height/3);
+        self.frame = frame;
+    }
+    else
+    {
+        self.topView.layer.transform = CATransform3DMakeRotation(M_PI * progress, 1.0, 0, 0);
+        UIImage *topViewImage = (progress > (0.5 - 0.055) ? self.detailTopImage : self.coverImage);
+        [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
+    }
+    _currentProgress = progress;
 }
 
-- (void)animateToEnd:(BOOL)isReverse
+
+- (void)bounceToEnd:(BOOL)toDetailMode
 {
     [UIView animateWithDuration:0.3
+                          delay:0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:5
+                        options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-        [self animateProgress:(isReverse ? 0 : 1.0)];
-    } completion:^(BOOL finished) {
-        [self toggleFoldIsStart:NO isReverse:isReverse];
-    }];
+                         self.frame = self.originFrame;
+                     }
+                     completion:^(BOOL finished) {
+                     }];
+}
+
+- (void)animateToEnd:(BOOL)toDetailMode
+{
+    BOOL directToDetail = (toDetailMode && _currentProgress > 0.445);
+    BOOL directToCover = (!toDetailMode && _currentProgress <= 0.445);
+    CGFloat duration = 0.3;
+    if (directToCover || directToDetail)
+    {
+        [UIView animateWithDuration:duration
+                              delay:0
+                            options:UIViewAnimationOptionCurveEaseInOut
+                         animations:^{
+                             [self animateProgress:(toDetailMode ? 1.0 : 0)];
+                         } completion:^(BOOL finished) {
+                             if (finished)
+                             {
+                                 [self toggleFoldIsStart:NO isReverse:!toDetailMode];
+                             }
+                         }];
+    }
+    else
+    {
+        CGFloat beforeDuration = duration * (fabs(self.currentProgress - 0.445)/1.0);
+        CGFloat afterDuration  = duration - beforeDuration;
+        [UIView animateWithDuration:beforeDuration
+                              delay:0
+                            options:UIViewAnimationOptionCurveLinear
+                         animations:^{
+                             [self animateProgress:(toDetailMode ? 0.444 : 0.446)];
+                         }
+                         completion:^(BOOL finished) {
+                             if (finished)
+                             {
+                                 UIImage *topViewImage = (toDetailMode ? self.detailTopImage : self.coverImage);
+                                 [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
+                                 [UIView animateWithDuration:afterDuration
+                                                       delay:0
+                                                     options:UIViewAnimationOptionCurveLinear
+                                                  animations:^{
+                                                      [self animateProgress:(toDetailMode ? 1.0 : 0)];
+                                                  } completion:^(BOOL finished) {
+                                                      if (finished)
+                                                      {
+                                                          [self toggleFoldIsStart:NO isReverse:!toDetailMode];
+                                                      }
+                                                  }];
+                             }
+                         }];
+    }
 }
 
 - (void)animate
@@ -141,7 +203,28 @@
     }];
 }
 
-
+- (void)toggleFoldIsStart:(BOOL)isStart isReverse:(BOOL)isReverse
+{
+    if (isStart)
+    {
+        UIView *originView = (!isReverse ? self.coverContentView : self.detailContentView);
+        [originView removeFromSuperview];
+        [self addSubview:self.bottomView];
+        [self addSubview:self.topView];
+        UIImage *topViewImage = (isReverse ? self.detailTopImage : self.coverImage);
+        [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
+        [self.bottomView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
+    }
+    else
+    {
+        UIView *destinateView = (isReverse ? self.coverContentView : self.detailContentView);
+        [self addSubview:destinateView];
+        [self.bottomView removeFromSuperview];
+        [self.topView removeFromSuperview];
+        _detailMode = !isReverse;
+        [self bounceToEnd:!isReverse];
+    }
+}
 
 -(void)setAnchorPoint:(CGPoint)anchorPoint forView:(UIView *)view
 {

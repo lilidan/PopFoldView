@@ -424,6 +424,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = PopFoldView/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = sgcy.PopFoldView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -435,6 +436,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = PopFoldView/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = sgcy.PopFoldView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -508,6 +510,7 @@
 				63B67AD21C24ECCC008DEE8F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		63B67AD31C24ECCC008DEE8F /* Build configuration list for PBXNativeTarget "PopFoldViewTests" */ = {
 			isa = XCConfigurationList;
@@ -516,6 +519,7 @@
 				63B67AD51C24ECCC008DEE8F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		63B67AD61C24ECCC008DEE8F /* Build configuration list for PBXNativeTarget "PopFoldViewUITests" */ = {
 			isa = XCConfigurationList;
@@ -524,6 +528,7 @@
 				63B67AD81C24ECCC008DEE8F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
