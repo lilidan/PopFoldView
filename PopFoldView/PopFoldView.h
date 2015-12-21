@@ -13,15 +13,13 @@ typedef NS_ENUM(NSUInteger, PopFoldViewStatus)
     PopFoldViewStatusCover= 0,
     PopFoldViewStatusDetail = 1,
     PopFoldViewStatusGoCover = 2,
-    PopFoldViewStatusGoDetail = 3,
-    PopFoldViewStatusBounceCover = 4,
-    PopFoldViewStatusBounceDetail = 5,
+    PopFoldViewStatusGoDetail = 3
 };
 
 
 @interface PopFoldView : UIView
 
-@property (nonatomic,assign,getter=isDetailMode) BOOL detailMode;
+@property (nonatomic,assign) PopFoldViewStatus status;
 
 - (void)animate;
 - (void)setCoverContent:(UIView *)contentView;
