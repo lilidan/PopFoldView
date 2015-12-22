@@ -17,6 +17,7 @@
 		63B67ACC1C24ECCC008DEE8F /* PopFoldViewUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67ACB1C24ECCC008DEE8F /* PopFoldViewUITests.m */; };
 		63B67ADB1C24ECE0008DEE8F /* PopFoldView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67ADA1C24ECE0008DEE8F /* PopFoldView.m */; };
 		63B67ADE1C252182008DEE8F /* UIView+screenShot.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67ADD1C252182008DEE8F /* UIView+screenShot.m */; };
+		D6FDA1101C28E7E600D7EF1C /* PopFoldSlideView.m in Sources */ = {isa = PBXBuildFile; fileRef = D6FDA10F1C28E7E600D7EF1C /* PopFoldSlideView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,8 @@
 		63B67ADA1C24ECE0008DEE8F /* PopFoldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopFoldView.m; sourceTree = "<group>"; };
 		63B67ADC1C252182008DEE8F /* UIView+screenShot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+screenShot.h"; sourceTree = "<group>"; };
 		63B67ADD1C252182008DEE8F /* UIView+screenShot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+screenShot.m"; sourceTree = "<group>"; };
+		D6FDA10E1C28E7E600D7EF1C /* PopFoldSlideView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopFoldSlideView.h; sourceTree = "<group>"; };
+		D6FDA10F1C28E7E600D7EF1C /* PopFoldSlideView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopFoldSlideView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +114,8 @@
 				63B67AAA1C24ECCC008DEE8F /* AppDelegate.m */,
 				63B67AAC1C24ECCC008DEE8F /* ViewController.h */,
 				63B67AAD1C24ECCC008DEE8F /* ViewController.m */,
+				D6FDA10E1C28E7E600D7EF1C /* PopFoldSlideView.h */,
+				D6FDA10F1C28E7E600D7EF1C /* PopFoldSlideView.m */,
 				63B67AD91C24ECE0008DEE8F /* PopFoldView.h */,
 				63B67ADA1C24ECE0008DEE8F /* PopFoldView.m */,
 				63B67ADC1C252182008DEE8F /* UIView+screenShot.h */,
@@ -285,6 +290,7 @@
 				63B67AAB1C24ECCC008DEE8F /* AppDelegate.m in Sources */,
 				63B67AA81C24ECCC008DEE8F /* main.m in Sources */,
 				63B67ADB1C24ECE0008DEE8F /* PopFoldView.m in Sources */,
+				D6FDA1101C28E7E600D7EF1C /* PopFoldSlideView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

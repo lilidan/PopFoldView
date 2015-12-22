@@ -9,6 +9,7 @@
 #import "PopFoldView.h"
 #import "UIView+screenShot.h"
 #import <QuartzCore/QuartzCore.h>
+
 @interface PopFoldView()
 
 @property (nonatomic,strong) UIView *topView, *bottomView;
@@ -30,6 +31,7 @@
 
 const CGFloat kScaleRatio = 0.2;
 const CGFloat kVerticalDelta = -50;
+const CGFloat kTriggerDelta = 70;
 
 - (void)initialize
 {
@@ -48,7 +50,6 @@ const CGFloat kVerticalDelta = -50;
     [self addGestureRecognizer:self.panGr];
     
     [self setAnchorPoint:CGPointMake(0.5, 0) forView:self.topView];
-    
 }
 
 - (void)pan:(UIPanGestureRecognizer *)panGr
@@ -66,13 +67,13 @@ const CGFloat kVerticalDelta = -50;
     }
     else
     {
-        BOOL goCover = (self.status == PopFoldViewStatusGoCover); //gocover 即表示从 detail开始
+        BOOL goCover = (self.status == PopFoldViewStatusGoCover);
         CGPoint translation = [panGr translationInView:self];
         CGFloat change = translation.y/self.frame.size.height;
         CGFloat progress = (goCover ? 1 - change: - change);
         if (progress < 0.001)
         {
-            [self bounceToEnd:YES];
+            [self bounce:YES];
             if (goCover)
             {
                 [self toggleFoldIsStart:NO];
@@ -81,7 +82,7 @@ const CGFloat kVerticalDelta = -50;
         }
         else if (progress > 1.001)
         {
-            [self bounceToEnd:NO];
+            [self bounce:NO];
             if (!goCover)
             {
                 [self toggleFoldIsStart:YES];
@@ -89,11 +90,17 @@ const CGFloat kVerticalDelta = -50;
         }
         else
         {
-            [self animateToEnd:(translation.y < 0)];
+            if (fabs(translation.y) < kTriggerDelta)
+            {
+                [self back:translation.y < 0];
+            }
+            else
+            {
+                [self forward:translation.y > 0];
+            }
         }
     }
 }
-
 
 - (void)refreshProgress:(CGFloat)progress animated:(BOOL)animated
 {
@@ -109,7 +116,6 @@ const CGFloat kVerticalDelta = -50;
     }
     else
     {
-        
         if (!animated)
         {
             CGFloat scale = 1.0 + kScaleRatio * progress;
@@ -124,8 +130,9 @@ const CGFloat kVerticalDelta = -50;
     _currentProgress = progress;
 }
 
+#pragma mark - helper
 
-- (void)bounceToEnd:(BOOL)toCover
+- (void)bounce:(BOOL)toCover
 {
     [UIView animateWithDuration:0.3
                           delay:0
@@ -143,10 +150,30 @@ const CGFloat kVerticalDelta = -50;
                      }];
 }
 
-- (void)animateToEnd:(BOOL)toDetailMode
+- (void)back:(BOOL)toCover
 {
-    BOOL directToDetail = (toDetailMode && _currentProgress > 0.445);
-    BOOL directToCover = (!toDetailMode && _currentProgress <= 0.445);
+    [UIView animateWithDuration:0.3
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                         [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
+                     } completion:^(BOOL finished) {
+                         if (finished)
+                         {
+                             UIView *destinateView = (toCover ? self.coverContentView : self.detailContentView);
+                             [self addSubview:destinateView];
+                             [self.bottomView removeFromSuperview];
+                             [self.topView removeFromSuperview];
+                             _status = (toCover ? PopFoldViewStatusCover : PopFoldViewStatusDetail);
+                         }
+                     }];
+    [self bounce:toCover];
+}
+
+- (void)forward:(BOOL)toCover
+{
+    BOOL directToDetail = (!toCover && _currentProgress > 0.445);
+    BOOL directToCover = (toCover && _currentProgress <= 0.445);
     CGFloat duration = 0.3;
     if (directToCover || directToDetail)
     {
@@ -154,14 +181,14 @@ const CGFloat kVerticalDelta = -50;
                               delay:0
                             options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
-                             [self refreshProgress:(toDetailMode ? 1.0 : 0) animated:YES];
+                             [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
                          } completion:^(BOOL finished) {
                              if (finished)
                              {
                                  [self toggleFoldIsStart:NO];
                              }
                          }];
-        [self bounceToEnd:!toDetailMode];
+        [self bounce:toCover];
     }
     else
     {
@@ -171,52 +198,28 @@ const CGFloat kVerticalDelta = -50;
                               delay:0
                             options:UIViewAnimationOptionCurveLinear
                          animations:^{
-                             [self refreshProgress:(toDetailMode ? 0.444 : 0.446) animated:NO];
+                             [self refreshProgress:(!toCover ? 0.444 : 0.446) animated:NO];
                          }
                          completion:^(BOOL finished) {
                              if (finished)
                              {
-                                 UIImage *topViewImage = (toDetailMode ? self.detailTopImage : self.coverImage);
+                                 UIImage *topViewImage = (!toCover ? self.detailTopImage : self.coverImage);
                                  [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
                                  [UIView animateWithDuration:afterDuration
                                                        delay:0
                                                      options:UIViewAnimationOptionCurveLinear
                                                   animations:^{
-                                                      [self refreshProgress:(toDetailMode ? 1.0 : 0) animated:YES];
+                                                      [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
                                                   } completion:^(BOOL finished) {
                                                       if (finished)
                                                       {
                                                           [self toggleFoldIsStart:NO];
                                                       }
                                                   }];
-                                 [self bounceToEnd:!toDetailMode];
+                                 [self bounce:toCover];
                              }
                          }];
     }
-}
-
-- (void)animate
-{
-    [self.coverContentView removeFromSuperview];
-    [self addSubview:self.bottomView];
-    [self addSubview:self.topView];
-    [self.topView.layer setContents:(__bridge id)self.coverImage.CGImage];
-    [self.bottomView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
-    
-    self.transform = CGAffineTransformMakeScale(0.7, 0.7);
-    [UIView animateWithDuration:3.0 animations:^{
-        self.transform = CGAffineTransformMakeScale(0.9, 0.9);
-        self.topView.layer.transform = CATransform3DMakeRotation(M_PI/2 - M_PI/19, 1.0, 0, 0);
-    } completion:^(BOOL finished) {
-           [self.topView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
-        [UIView animateWithDuration:3.0 animations:^{
-            self.topView.layer.transform = CATransform3DMakeRotation(M_PI, 1.0, 0, 0);
-        } completion:^(BOOL finished) {
-            [self.topView removeFromSuperview];
-            [self.bottomView removeFromSuperview];
-            [self addSubview:self.detailContentView];
-        }];
-    }];
 }
 
 - (void)toggleFoldIsStart:(BOOL)isStart
@@ -249,32 +252,27 @@ const CGFloat kVerticalDelta = -50;
     }
 }
 
--(void)setAnchorPoint:(CGPoint)anchorPoint forView:(UIView *)view
+- (void)toggle:(BOOL)toCover
 {
-    CGPoint newPoint = CGPointMake(view.bounds.size.width * anchorPoint.x,
-                                   view.bounds.size.height * anchorPoint.y);
-    CGPoint oldPoint = CGPointMake(view.bounds.size.width * view.layer.anchorPoint.x,
-                                   view.bounds.size.height * view.layer.anchorPoint.y);
-    
-    newPoint = CGPointApplyAffineTransform(newPoint, view.transform);
-    oldPoint = CGPointApplyAffineTransform(oldPoint, view.transform);
-    
-    CGPoint position = view.layer.position;
-    
-    position.x -= oldPoint.x;
-    position.x += newPoint.x;
-    
-    position.y -= oldPoint.y;
-    position.y += newPoint.y;
-    
-    view.layer.position = position;
-    view.layer.anchorPoint = anchorPoint;
+    if (self.status == PopFoldViewStatusCover && !toCover)
+    {
+        [self forward:NO];
+    }
+    else if (self.status == PopFoldViewStatusDetail && toCover)
+    {
+        [self forward:YES];
+    }
 }
 
 #pragma mark - setter
 
 - (void)setCoverContent:(UIView *)contentView
 {
+    for (UIView *view in self.coverContentView.subviews)
+    {
+        [view removeFromSuperview];
+    }
+    
     contentView.frame = self.coverContentView.bounds;
     [self.coverContentView addSubview:contentView];
     self.coverImage = [self.coverContentView screenshot];
@@ -282,7 +280,11 @@ const CGFloat kVerticalDelta = -50;
 
 - (void)setDetailContent:(UIView *)contentView
 {
-    // add the actual visible view, as a subview of _contentView
+    for (UIView *view in self.detailContentView.subviews)
+    {
+        [view removeFromSuperview];
+    }
+
     contentView.frame = self.detailContentView.bounds;
     [self.detailContentView addSubview:contentView];
     UIImage *image = [self.detailContentView screenshot];
@@ -308,6 +310,31 @@ const CGFloat kVerticalDelta = -50;
     self.detailBottomImage = [[UIImage alloc] initWithCGImage:imageRef];
     CFRelease(imageRef2);
 }
+
+#pragma mark - helper
+
+-(void)setAnchorPoint:(CGPoint)anchorPoint forView:(UIView *)view
+{
+    CGPoint newPoint = CGPointMake(view.bounds.size.width * anchorPoint.x,
+                                   view.bounds.size.height * anchorPoint.y);
+    CGPoint oldPoint = CGPointMake(view.bounds.size.width * view.layer.anchorPoint.x,
+                                   view.bounds.size.height * view.layer.anchorPoint.y);
+    
+    newPoint = CGPointApplyAffineTransform(newPoint, view.transform);
+    oldPoint = CGPointApplyAffineTransform(oldPoint, view.transform);
+    
+    CGPoint position = view.layer.position;
+    
+    position.x -= oldPoint.x;
+    position.x += newPoint.x;
+    
+    position.y -= oldPoint.y;
+    position.y += newPoint.y;
+    
+    view.layer.position = position;
+    view.layer.anchorPoint = anchorPoint;
+}
+
 
 #pragma mark - init
 
