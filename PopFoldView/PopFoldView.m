@@ -21,6 +21,7 @@
 @property (nonatomic,strong) UIImage* detailBottomImage;
 @property (nonatomic,strong) UIImage* coverImage;
 
+@property (nonatomic,strong) CALayer* detailTopLayer;
 
 @end
 
@@ -29,6 +30,7 @@
 const CGFloat kScaleRatio = 0.2;
 const CGFloat kVerticalDelta = -50;
 const CGFloat kTriggerDelta = 70;
+const CGFloat kDetailCoverSeperatorConstant = 0.43;
 
 - (void)initialize
 {
@@ -36,6 +38,11 @@ const CGFloat kTriggerDelta = 70;
     _coverContentView = [[UIView alloc] initWithFrame:self.bounds];
     _topView = [[UIView alloc] initWithFrame:self.bounds];
     _bottomView = [[UIView alloc] initWithFrame:self.bounds];
+    
+    _detailTopLayer = [CALayer layer];
+    self.detailTopLayer.transform = CATransform3DMakeRotation(M_PI, 1, 0, 0);
+    self.detailTopLayer.hidden = YES;
+    [self.topView.layer addSublayer:self.detailTopLayer];
     
     [self addSubview:self.coverContentView];
     
@@ -136,9 +143,12 @@ const CGFloat kTriggerDelta = 70;
             CATransform3D scaleTransform = CATransform3DMakeScale(scale,scale,1.0);
             self.layer.transform = CATransform3DTranslate(scaleTransform, 0, kVerticalDelta * progress, 0);
         }
-        self.topView.layer.transform = CATransform3DMakeRotation(M_PI * progress, 1.0, 0, 0);
-        UIImage *topViewImage = (progress > (0.5 - 0.055) ? self.detailTopImage : self.coverImage);
-        [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
+        CATransform3D transform = CATransform3DMakeRotation(M_PI * progress, 1.0, 0, 0);
+        self.topView.layer.transform = transform;
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
+        self.detailTopLayer.hidden = (progress < kDetailCoverSeperatorConstant);
+        [CATransaction commit];
 
     }
     _currentProgress = progress;
@@ -191,8 +201,8 @@ const CGFloat kTriggerDelta = 70;
 
 - (void)forward:(BOOL)toCover
 {
-    BOOL directToDetail = (!toCover && _currentProgress > 0.445);
-    BOOL directToCover = (toCover && _currentProgress <= 0.445);
+    BOOL directToDetail = (!toCover && _currentProgress > kDetailCoverSeperatorConstant);
+    BOOL directToCover = (toCover && _currentProgress <= kDetailCoverSeperatorConstant);
     CGFloat duration = 0.3;
     if (directToCover || directToDetail)
     {
@@ -211,19 +221,21 @@ const CGFloat kTriggerDelta = 70;
     }
     else
     {
-        CGFloat beforeDuration = duration * (fabs(self.currentProgress - 0.445)/1.0);
+        CGFloat beforeDuration = duration * (fabs(self.currentProgress - kDetailCoverSeperatorConstant)/1.0);
         CGFloat afterDuration  = duration - beforeDuration;
         [UIView animateWithDuration:beforeDuration
                               delay:0
                             options:UIViewAnimationOptionCurveLinear
                          animations:^{
-                             [self refreshProgress:(!toCover ? 0.444 : 0.446) animated:NO];
+                             [self refreshProgress:(!toCover ? kDetailCoverSeperatorConstant - 0.001 : kDetailCoverSeperatorConstant + 0.001) animated:NO];
                          }
                          completion:^(BOOL finished) {
                              if (finished)
                              {
-                                 UIImage *topViewImage = (!toCover ? self.detailTopImage : self.coverImage);
-                                 [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
+                                 [CATransaction begin];
+                                 [CATransaction setDisableActions:YES];
+                                 self.detailTopLayer.hidden = toCover;
+                                 [CATransaction commit];
                                  [UIView animateWithDuration:afterDuration
                                                        delay:0
                                                      options:UIViewAnimationOptionCurveLinear
@@ -253,8 +265,8 @@ const CGFloat kTriggerDelta = 70;
             [originView removeFromSuperview];
             [self addSubview:self.bottomView];
             [self addSubview:self.topView];
-            UIImage *topViewImage = (goCover ? self.detailTopImage : self.coverImage);
-            [self.topView.layer setContents:(__bridge id)topViewImage.CGImage];
+            [self.detailTopLayer setContents:(__bridge id)self.detailTopImage.CGImage];
+            [self.topView.layer setContents:(__bridge id)self.coverImage.CGImage];
             [self.bottomView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
             _status = (goCover ? PopFoldViewStatusGoCover : PopFoldViewStatusGoDetail);
         }
@@ -321,6 +333,7 @@ const CGFloat kTriggerDelta = 70;
     self.detailContentView.frame = CGRectMake(0, -self.frame.size.height, self.frame.size.width, self.frame.size.height * 2);
     self.coverContentView.frame = self.bounds;
     self.topView.frame = self.bounds;
+    self.detailTopLayer.frame = self.topView.bounds;
     self.bottomView.frame = self.bounds;
 }
 
