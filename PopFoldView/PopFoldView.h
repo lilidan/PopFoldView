@@ -16,15 +16,28 @@ typedef NS_ENUM(NSUInteger, PopFoldViewStatus)
     PopFoldViewStatusGoDetail = 3
 };
 
+@protocol PopFoldViewDelegate <NSObject>
+
+@optional
+- (void)popFoldView:(UIView *)view WillChange:(BOOL)show;
+- (void)popFoldView:(UIView *)view DidChange:(BOOL)show;
+
+@end
+
+
 @interface PopFoldView : UIView
 
 @property (nonatomic,assign) PopFoldViewStatus status;
+@property (nonatomic,strong) id<PopFoldViewDelegate> delegate;
 
-- (void)pan:(UIPanGestureRecognizer *)panGr
+@property (nonatomic,assign) CGFloat currentProgress;
+
+- (void)pan:(UIPanGestureRecognizer *)panGr;
 
 - (void)setCoverContent:(UIView *)contentView;
 - (void)setDetailContent:(UIView *)contentView;
 
 - (void)toggle:(BOOL)toCover;
+- (void)back:(BOOL)toCover;
 
 @end

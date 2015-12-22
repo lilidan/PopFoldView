@@ -21,9 +21,6 @@
 @property (nonatomic,strong) UIImage* detailBottomImage;
 @property (nonatomic,strong) UIImage* coverImage;
 
-@property (nonatomic,strong) UIPanGestureRecognizer *panGr;
-
-@property (nonatomic,assign) CGFloat currentProgress;
 
 @end
 
@@ -46,9 +43,6 @@ const CGFloat kTriggerDelta = 70;
     rotationAndPerspectiveTransform.m34 = 1.0 / -600;
     self.layer.sublayerTransform = rotationAndPerspectiveTransform;
     
-    _panGr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
-    [self addGestureRecognizer:self.panGr];
-    
     [self setAnchorPoint:CGPointMake(0.5, 0) forView:self.topView];
 }
 
@@ -67,25 +61,40 @@ const CGFloat kTriggerDelta = 70;
     }
     else
     {
-        BOOL goCover = (self.status == PopFoldViewStatusGoCover);
+        BOOL goCover = (self.status == PopFoldViewStatusGoCover); //是否为detail开始
         CGPoint translation = [panGr translationInView:self];
         CGFloat change = translation.y/self.frame.size.height;
         CGFloat progress = (goCover ? 1 - change: - change);
-        if (progress < 0.001)
+        if (progress < -0.001)
         {
-            [self bounce:YES];
             if (goCover)
             {
-                [self toggleFoldIsStart:NO];
-
+                [self forward:YES];
+                
+                if ([self.delegate respondsToSelector:@selector(popFoldView:WillChange:)])
+                {
+                    [self.delegate popFoldView:self WillChange:NO];
+                }
+            }
+            else
+            {
+                [self back:YES];
             }
         }
         else if (progress > 1.001)
         {
-            [self bounce:NO];
             if (!goCover)
             {
-                [self toggleFoldIsStart:YES];
+                [self forward:NO];
+                
+                if ([self.delegate respondsToSelector:@selector(popFoldView:WillChange:)])
+                {
+                    [self.delegate popFoldView:self WillChange:NO];
+                }
+            }
+            else
+            {
+                [self back:NO];
             }
         }
         else
@@ -97,6 +106,11 @@ const CGFloat kTriggerDelta = 70;
             else
             {
                 [self forward:translation.y > 0];
+                
+                if ([self.delegate respondsToSelector:@selector(popFoldView:WillChange:)])
+                {
+                    [self.delegate popFoldView:self WillChange:(translation.y <= 0)];
+                }
             }
         }
     }
@@ -165,7 +179,12 @@ const CGFloat kTriggerDelta = 70;
                              [self.bottomView removeFromSuperview];
                              [self.topView removeFromSuperview];
                              _status = (toCover ? PopFoldViewStatusCover : PopFoldViewStatusDetail);
-                         }
+                             
+                             if ([self.delegate respondsToSelector:@selector(popFoldView:DidChange:)])
+                             {
+                                 [self.delegate popFoldView:self DidChange:!toCover];
+                             }
+                          }
                      }];
     [self bounce:toCover];
 }
@@ -249,6 +268,11 @@ const CGFloat kTriggerDelta = 70;
         [self.topView removeFromSuperview];
         
         _status = (goCover ? PopFoldViewStatusCover : PopFoldViewStatusDetail);
+        
+        if ([self.delegate respondsToSelector:@selector(popFoldView:DidChange:)])
+        {
+            [self.delegate popFoldView:self DidChange:!goCover];
+        }
     }
 }
 
@@ -300,18 +324,19 @@ const CGFloat kTriggerDelta = 70;
     self.bottomView.frame = self.bounds;
 }
 
+
+#pragma mark - helper
 - (void)seperateImage:(UIImage*)image
 {
     CGImageRef imageRef = CGImageCreateWithImageInRect([image CGImage], CGRectMake(0, image.size.height*image.scale/2, image.size.width*image.scale, image.size.height*image.scale/2));
-    self.detailTopImage = [[UIImage alloc] initWithCGImage:imageRef];
+    self.detailBottomImage = [[UIImage alloc] initWithCGImage:imageRef];
     CFRelease(imageRef);
     
     CGImageRef imageRef2 = CGImageCreateWithImageInRect([image CGImage], CGRectMake(0, 0, image.size.width*image.scale, image.size.height*image.scale/2));
-    self.detailBottomImage = [[UIImage alloc] initWithCGImage:imageRef];
+    self.detailTopImage = [[UIImage alloc] initWithCGImage:imageRef2];
     CFRelease(imageRef2);
 }
 
-#pragma mark - helper
 
 -(void)setAnchorPoint:(CGPoint)anchorPoint forView:(UIView *)view
 {
@@ -334,7 +359,6 @@ const CGFloat kTriggerDelta = 70;
     view.layer.position = position;
     view.layer.anchorPoint = anchorPoint;
 }
-
 
 #pragma mark - init
 

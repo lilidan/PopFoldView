@@ -12,7 +12,7 @@
 #define SCREEN_WIDTH [UIScreen mainScreen].bounds.size.width
 #define SCREEN_HEIGHT [UIScreen mainScreen].bounds.size.height
 
-@interface PopFoldSlideView()
+@interface PopFoldSlideView()<PopFoldViewDelegate>
 
 @property (nonatomic,strong) NSArray<__kindof UIView *> *cells;
 @property (nonatomic,assign) NSInteger currentIndex;
@@ -32,10 +32,10 @@ const CGFloat kTriggerChangeRatio = 0.15;
 - (void)initialize
 {
     self.panGr = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];
+    [self addGestureRecognizer:self.panGr];
     
     self.numberOfCells = 3;
     [self addCells];
-    
 }
 
 - (void)pan:(UIPanGestureRecognizer *)panGr
@@ -45,33 +45,68 @@ const CGFloat kTriggerChangeRatio = 0.15;
     if (panGr.state == UIGestureRecognizerStateBegan)
     {
         _originalPoint = popFoldView.frame.origin;
+        [popFoldView pan:panGr];
     }
     else if (panGr.state == UIGestureRecognizerStateChanged)
     {
         CGFloat translationX = [panGr translationInView:self].x;
-        for (int i = -1; i < 2; i++)
+        CGFloat translationY = [panGr translationInView:self].y;
+        
+        if (self.panStatus == PopFoldPanStatusDefault)
         {
-            CGRect frame = self.subviews[i+1].frame;
-            frame.origin.x = _originalPoint.x + translationX + i * SCREEN_WIDTH * (kCellSizeRatio + kCellPaddingRatio);
-            self.subviews[i+1].frame = frame;
+            BOOL coverMode = (popFoldView.currentProgress == 0);
+            BOOL horizonalMove = fabs(translationX) > fabs(translationY);
+            _panStatus = (horizonalMove && coverMode ? PopFoldPanStatusHorizonal : PopFoldPanStatusVetical);
+        }
+        
+        if (self.panStatus == PopFoldPanStatusHorizonal)
+        {
+            for (int i = -1; i < 2; i++)
+            {
+                CGRect frame = self.subviews[i+1].frame;
+                frame.origin.x = _originalPoint.x + translationX + i * SCREEN_WIDTH * (kCellSizeRatio + kCellPaddingRatio);
+                self.subviews[i+1].frame = frame;
+            }
+        }
+        else
+        {
+            [self toggleOtherViewsHide:YES];
+            [popFoldView pan:panGr];
         }
     }
     else
     {
-        CGFloat translationX = [panGr translationInView:self].x;
-        if (translationX > SCREEN_WIDTH * kTriggerChangeRatio)
+        if (self.panStatus == PopFoldPanStatusHorizonal)
         {
-            [self goToIndex:self.currentIndex - 1];
-        }
-        else if(translationX < - SCREEN_WIDTH * kTriggerChangeRatio)
-        {
-            [self goToIndex:self.currentIndex + 1];
+            CGFloat translationX = [panGr translationInView:self].x;
+            if (translationX > SCREEN_WIDTH * kTriggerChangeRatio)
+            {
+                [self goToIndex:self.currentIndex - 1];
+            }
+            else if(translationX < - SCREEN_WIDTH * kTriggerChangeRatio)
+            {
+                [self goToIndex:self.currentIndex + 1];
+            }
+            else
+            {
+                [self goToIndex:self.currentIndex];
+            }
+            [popFoldView back:YES];
         }
         else
         {
-            [self goToIndex:self.currentIndex];
+            [popFoldView pan:panGr];
         }
+        _panStatus = PopFoldPanStatusDefault;
     }
+}
+
+- (void)toggleOtherViewsHide:(BOOL)hide
+{
+    [UIView animateWithDuration:0.2 animations:^{
+        self.subviews[0].alpha = ( hide ? 0 : 1.0);
+        self.subviews[2].alpha = ( hide ? 0 : 1.0);
+    }];
 }
 
 - (void)goToIndex:(NSInteger)index
@@ -123,6 +158,17 @@ const CGFloat kTriggerChangeRatio = 0.15;
     }
 }
 
+#pragma mark - delegate
+
+- (void)popFoldView:(UIView *)view DidChange:(BOOL)show
+{
+    if (!show)
+    {
+        [self toggleOtherViewsHide:NO];
+    }
+}
+
+
 #pragma mark - setter
 
 - (void)addCells
@@ -133,12 +179,13 @@ const CGFloat kTriggerChangeRatio = 0.15;
     }
     
     CGSize size = CGSizeMake(SCREEN_WIDTH * kCellSizeRatio,SCREEN_HEIGHT * kCellSizeRatio / 2);
-    CGFloat bottomPadding = SCREEN_HEIGHT * kCellPaddingRatio * 2;
+    CGFloat bottomPadding = SCREEN_HEIGHT * kCellPaddingRatio;
     
     NSMutableArray *cells = [NSMutableArray new];
     for (int i = 0 ; i < self.numberOfCells; i++)
     {
         PopFoldView *cell = [[PopFoldView alloc] init];
+        cell.delegate = self;
         cell.frame = CGRectMake(0, SCREEN_HEIGHT - size.height - bottomPadding, size.width, size.height);
         if (self.coverContentViews.count > i)
         {
@@ -148,7 +195,6 @@ const CGFloat kTriggerChangeRatio = 0.15;
         {
             [cell setDetailContent:self.detailContentViews[i]];
         }
-        [cell.panGr requireGestureRecognizerToFail:self.panGr];
         [cells addObject:cell];
     }
     self.cells = [cells copy];

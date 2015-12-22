@@ -32,13 +32,16 @@
     {
         UIView *cover = [[UIView alloc] init];
         cover.backgroundColor = [UIColor yellowColor];
-        UIView *view1 = [[UIView alloc] initWithFrame:CGRectMake(50, 50, 100, 100)];
+        UILabel *view1 = [[UILabel alloc] initWithFrame:CGRectMake(50, 50, 100, 100)];
         view1.backgroundColor = [UIColor redColor];
+        view1.text = @"1";
         [cover addSubview:view1];
         UIView *detail = [[UIView alloc] init];
         detail.backgroundColor = [UIColor blueColor];
-        UIView *view2 = [[UIView alloc] initWithFrame:CGRectMake(50, 150, 100, 100)];
+        UILabel *view2 = [[UILabel alloc] initWithFrame:CGRectMake(50, 150, 100, 100)];
         view2.backgroundColor = [UIColor greenColor];
+        view2.text = @"2";
+
         [detail addSubview:view2];
         [array1 addObject:cover];
         [array2 addObject:detail];
