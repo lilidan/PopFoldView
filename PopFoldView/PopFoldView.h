@@ -8,12 +8,18 @@
 
 #import <UIKit/UIKit.h>
 
-typedef NS_ENUM(NSUInteger, PopFoldViewStatus)
+typedef NS_ENUM(NSUInteger, PopFoldViewStatus)   //只在开始和结束时改变，只在中途判断
 {
-    PopFoldViewStatusCover= 0,
+    PopFoldViewStatusCover = 0,
     PopFoldViewStatusDetail = 1,
-    PopFoldViewStatusGoCover = 2,
-    PopFoldViewStatusGoDetail = 3
+    PopFoldViewStatusMovingFromCover = 2,
+    PopFoldViewStatusMovingFromDetail = 3,
+};
+
+typedef NS_ENUM(NSUInteger, PopFoldViewGo)  //只在中途改变，只在开始和结束时判断
+{
+    PopFoldViewStatusGoCover = 0,
+    PopFoldViewStatusGoDetail = 1
 };
 
 @protocol PopFoldViewDelegate <NSObject>
@@ -28,6 +34,7 @@ typedef NS_ENUM(NSUInteger, PopFoldViewStatus)
 @interface PopFoldView : UIView
 
 @property (nonatomic,assign) PopFoldViewStatus status;
+@property (nonatomic,assign) PopFoldViewGo goTo;
 @property (nonatomic,strong) id<PopFoldViewDelegate> delegate;
 
 @property (nonatomic,assign) CGFloat currentProgress;
@@ -38,6 +45,6 @@ typedef NS_ENUM(NSUInteger, PopFoldViewStatus)
 - (void)setDetailContent:(UIView *)contentView;
 
 - (void)toggle:(BOOL)toCover;
-- (void)back:(BOOL)toCover;
+- (void)back;
 
 @end

@@ -91,7 +91,8 @@ const CGFloat kTriggerChangeRatio = 0.15;
             {
                 [self goToIndex:self.currentIndex];
             }
-            [popFoldView back:YES];
+            
+            [popFoldView back];
         }
         else
         {

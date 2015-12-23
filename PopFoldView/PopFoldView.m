@@ -23,6 +23,11 @@
 
 @property (nonatomic,strong) CALayer* detailTopLayer;
 
+@property (nonatomic,assign) BOOL panEnabled;
+
+@property (nonatomic,assign) CGFloat changingProgress;
+@property (nonatomic,assign) NSInteger isAnimatingCount;
+
 @end
 
 @implementation PopFoldView
@@ -38,6 +43,9 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     _coverContentView = [[UIView alloc] initWithFrame:self.bounds];
     _topView = [[UIView alloc] initWithFrame:self.bounds];
     _bottomView = [[UIView alloc] initWithFrame:self.bounds];
+    
+    _goTo = PopFoldViewStatusGoCover;
+    _status = PopFoldViewStatusCover;
     
     _detailTopLayer = [CALayer layer];
     self.detailTopLayer.transform = CATransform3DMakeRotation(M_PI, 1, 0, 0);
@@ -55,70 +63,38 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
 
 - (void)pan:(UIPanGestureRecognizer *)panGr
 {
+    
     if (panGr.state == UIGestureRecognizerStateBegan)
     {
-        [self toggleFoldIsStart:YES];
+        [self start];
+        _changingProgress = self.currentProgress;
     }
     else if (panGr.state == UIGestureRecognizerStateChanged)
     {
-        BOOL goCover = (self.status == PopFoldViewStatusGoCover);
         CGPoint translation = [panGr translationInView:self];
         CGFloat change = translation.y/self.frame.size.height;
-        [self refreshProgress:(goCover ? 1 - change: - change) animated:NO];
+        CGFloat progress = self.changingProgress - change;
+        [self refreshProgress:progress animated:YES];
     }
     else
     {
-        BOOL goCover = (self.status == PopFoldViewStatusGoCover); //是否为detail开始
         CGPoint translation = [panGr translationInView:self];
-        CGFloat change = translation.y/self.frame.size.height;
-        CGFloat progress = (goCover ? 1 - change: - change);
-        if (progress < -0.001)
+        if (fabs(translation.y) < kTriggerDelta)
         {
-            if (goCover)
-            {
-                [self forward:YES];
-                
-                if ([self.delegate respondsToSelector:@selector(popFoldView:WillChange:)])
-                {
-                    [self.delegate popFoldView:self WillChange:NO];
-                }
-            }
-            else
-            {
-                [self back:YES];
-            }
-        }
-        else if (progress > 1.001)
-        {
-            if (!goCover)
-            {
-                [self forward:NO];
-                
-                if ([self.delegate respondsToSelector:@selector(popFoldView:WillChange:)])
-                {
-                    [self.delegate popFoldView:self WillChange:NO];
-                }
-            }
-            else
-            {
-                [self back:NO];
-            }
+            [self back];
         }
         else
         {
-            if (fabs(translation.y) < kTriggerDelta)
+            if (self.goTo == PopFoldViewStatusGoCover && translation.y < 0)
             {
-                [self back:translation.y < 0];
+                self.goTo = PopFoldViewStatusGoDetail;
             }
-            else
+            if (self.goTo == PopFoldViewStatusGoDetail && translation.y > 0)
             {
-                [self forward:translation.y > 0];
-                
-                if ([self.delegate respondsToSelector:@selector(popFoldView:WillChange:)])
-                {
-                    [self.delegate popFoldView:self WillChange:(translation.y <= 0)];
-                }
+                self.goTo = PopFoldViewStatusGoCover;
             }
+            
+            [self forward];
         }
     }
 }
@@ -149,15 +125,15 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
         [CATransaction setDisableActions:YES];
         self.detailTopLayer.hidden = (progress < kDetailCoverSeperatorConstant);
         [CATransaction commit];
-
     }
     _currentProgress = progress;
 }
 
 #pragma mark - helper
 
-- (void)bounce:(BOOL)toCover
+- (void)bounce
 {
+    BOOL toCover = (self.goTo == PopFoldViewStatusGoCover);
     [UIView animateWithDuration:0.3
                           delay:0
          usingSpringWithDamping:0.3
@@ -174,50 +150,29 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
                      }];
 }
 
-- (void)back:(BOOL)toCover
+- (void)back
 {
-    [UIView animateWithDuration:0.3
+    BOOL toCover = (self.goTo == PopFoldViewStatusGoCover);
+    [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                         [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
+                             [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
                      } completion:^(BOOL finished) {
-                         if (finished)
-                         {
-                             UIView *destinateView = (toCover ? self.coverContentView : self.detailContentView);
-                             [self addSubview:destinateView];
-                             [self.bottomView removeFromSuperview];
-                             [self.topView removeFromSuperview];
-                             _status = (toCover ? PopFoldViewStatusCover : PopFoldViewStatusDetail);
-                             
-                             if ([self.delegate respondsToSelector:@selector(popFoldView:DidChange:)])
-                             {
-                                 [self.delegate popFoldView:self DidChange:!toCover];
-                             }
-                          }
+                             [self end];
                      }];
-    [self bounce:toCover];
+    [self bounce];
 }
 
-- (void)forward:(BOOL)toCover
+- (void)forward
 {
+    BOOL toCover = (self.goTo == PopFoldViewStatusGoCover);
     BOOL directToDetail = (!toCover && _currentProgress > kDetailCoverSeperatorConstant);
     BOOL directToCover = (toCover && _currentProgress <= kDetailCoverSeperatorConstant);
-    CGFloat duration = 0.3;
+    CGFloat duration = 0.2;
     if (directToCover || directToDetail)
     {
-        [UIView animateWithDuration:duration
-                              delay:0
-                            options:UIViewAnimationOptionCurveEaseInOut
-                         animations:^{
-                             [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
-                         } completion:^(BOOL finished) {
-                             if (finished)
-                             {
-                                 [self toggleFoldIsStart:NO];
-                             }
-                         }];
-        [self bounce:toCover];
+        [self back];
     }
     else
     {
@@ -242,62 +197,55 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
                                                   animations:^{
                                                       [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
                                                   } completion:^(BOOL finished) {
-                                                      if (finished)
-                                                      {
-                                                          [self toggleFoldIsStart:NO];
-                                                      }
+                                                          [self end];
                                                   }];
-                                 [self bounce:toCover];
+                                 [self bounce];
                              }
                          }];
     }
 }
 
-- (void)toggleFoldIsStart:(BOOL)isStart
+- (void)start
 {
-    if (isStart)
+    BOOL isDetail = (self.status == PopFoldViewStatusDetail);
+    BOOL isCover = (self.status == PopFoldViewStatusCover);
+    if (isCover || isDetail)
     {
-        BOOL goCover = (self.status == PopFoldViewStatusDetail);
-        BOOL goDetail = (self.status == PopFoldViewStatusCover);
-        if (goCover || goDetail)
-        {
-            UIView *originView = (!goCover ? self.coverContentView : self.detailContentView);
-            [originView removeFromSuperview];
-            [self addSubview:self.bottomView];
-            [self addSubview:self.topView];
-            [self.detailTopLayer setContents:(__bridge id)self.detailTopImage.CGImage];
-            [self.topView.layer setContents:(__bridge id)self.coverImage.CGImage];
-            [self.bottomView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
-            _status = (goCover ? PopFoldViewStatusGoCover : PopFoldViewStatusGoDetail);
-        }
+        UIView *originView = (isCover ? self.coverContentView : self.detailContentView);
+        [originView removeFromSuperview];
+        [self addSubview:self.bottomView];
+        [self addSubview:self.topView];
+        [self.detailTopLayer setContents:(__bridge id)self.detailTopImage.CGImage];
+        [self.topView.layer setContents:(__bridge id)self.coverImage.CGImage];
+        [self.bottomView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
+        _status = ( isCover ? PopFoldViewStatusMovingFromCover : PopFoldViewStatusMovingFromDetail );
     }
-    else
+    self.isAnimatingCount ++;
+}
+
+- (void)end
+{
+    self.isAnimatingCount --;
+    if (self.isAnimatingCount > 0)
     {
-        BOOL goCover = (self.status == PopFoldViewStatusGoCover);
-        UIView *destinateView = (goCover ? self.coverContentView : self.detailContentView);
-        [self addSubview:destinateView];
-        [self.bottomView removeFromSuperview];
-        [self.topView removeFromSuperview];
-        
-        _status = (goCover ? PopFoldViewStatusCover : PopFoldViewStatusDetail);
-        
-        if ([self.delegate respondsToSelector:@selector(popFoldView:DidChange:)])
-        {
-            [self.delegate popFoldView:self DidChange:!goCover];
-        }
+        return;
+    }
+
+    BOOL toCover = (self.goTo == PopFoldViewStatusGoCover);
+    UIView *destinateView = (toCover ? self.coverContentView : self.detailContentView);
+    [self addSubview:destinateView];
+    [self.bottomView removeFromSuperview];
+    [self.topView removeFromSuperview];
+    _status = (toCover ? PopFoldViewStatusCover : PopFoldViewStatusDetail);
+    if ([self.delegate respondsToSelector:@selector(popFoldView:DidChange:)])
+    {
+        [self.delegate popFoldView:self DidChange:!toCover];
     }
 }
 
 - (void)toggle:(BOOL)toCover
 {
-    if (self.status == PopFoldViewStatusCover && !toCover)
-    {
-        [self forward:NO];
-    }
-    else if (self.status == PopFoldViewStatusDetail && toCover)
-    {
-        [self forward:YES];
-    }
+    
 }
 
 #pragma mark - setter
@@ -336,7 +284,6 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     self.detailTopLayer.frame = self.topView.bounds;
     self.bottomView.frame = self.bounds;
 }
-
 
 #pragma mark - helper
 - (void)seperateImage:(UIImage*)image
