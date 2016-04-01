@@ -23,13 +23,8 @@
 
 @property (nonatomic,strong) UIView* reverseTopView;
 
-@property (nonatomic,assign) BOOL startEnabled;
-
 @property (nonatomic,assign) CGFloat changingProgress;
 @property (nonatomic,assign) NSInteger isAnimatingCount;
-
-@property (nonatomic,assign) CGFloat originalTransY;
-@property (nonatomic,assign) CGFloat originalDistanceTransY;
 
 @end
 
@@ -74,64 +69,20 @@ const CGFloat kCornerRadius = 4;
     
     if (panGr.state == UIGestureRecognizerStateBegan)
     {
-        
+        [self start];
+        _changingProgress = self.currentProgress;
     }
     else if (panGr.state == UIGestureRecognizerStateChanged)
     {
-        if (self.status == PopFoldViewStatusCover || self.status == PopFoldViewStatusDetail)
-        {
-            [self start];
-            _changingProgress = self.currentProgress;
-            self.originalTransY = [panGr translationInView:self].y;
-            self.startEnabled = NO;
-            self.originalDistanceTransY = [panGr translationInView:self].y;
-        }
-        
-        CGFloat transY = [panGr translationInView:self].y - self.originalTransY;
+        CGFloat transY = [panGr translationInView:self].y;
         CGFloat change = transY/self.frame.size.height;
         CGFloat progress = self.changingProgress - change;
-        
-        //progress 在1周围波动时的start和end
-        if (self.currentProgress > 1.0 && progress < 1.0 && self.startEnabled)
-        {
-            self.startEnabled = NO;
-            self.status = PopFoldViewStatusDetail;
-            [self start];
-            self.status = PopFoldViewStatusMovingFromCover;
-            self.originalDistanceTransY = [panGr translationInView:self].y;
-        }
-        else if (self.currentProgress < 1.0 && progress > 1.0)
-        {
-            self.startEnabled = YES;
-            self.goTo = PopFoldViewStatusGoDetail;
-            [self end];
-            self.status = PopFoldViewStatusMovingFromCover;
-        }
         
         [self refreshProgress:progress scaled:YES];
     }
     else
     {
-        self.startEnabled = YES;
-        self.originalTransY = 0;
-        
-        //如果手势结束时progress > 1
-        if (self.currentProgress >= 1)
-        {
-            self.currentProgress = 1.0;
-            self.status = PopFoldViewStatusDetail;
-            
-            //如果是从PopFoldViewStatusDetail，progress = 1时开始的,需要end。
-            if (!self.detailContentView.superview)
-            {
-                self.goTo = PopFoldViewStatusGoDetail;
-                [self end];
-            }
-            return;
-        }
-        
-        //用初始值校正transY
-        CGFloat transY = [panGr translationInView:self].y - self.originalDistanceTransY;
+        CGFloat transY = [panGr translationInView:self].y;
         if (fabs(transY) < kTriggerDelta)
         {
             [self back];
@@ -160,9 +111,9 @@ const CGFloat kCornerRadius = 4;
     }
     else if (progress > 1)
     {
-//        CGFloat scale = (1.0 + kScaleRatio);
-//        CATransform3D scaleTransform = CATransform3DMakeScale(scale,scale, 1.0);
-//        self.layer.transform = CATransform3DTranslate(scaleTransform, 0, kVerticalDelta-fabs((progress - 1) * self.frame.size.height/3), 0);
+        CGFloat scale = (1.0 + kScaleRatio);
+        CATransform3D scaleTransform = CATransform3DMakeScale(scale,scale, 1.0);
+        self.layer.transform = CATransform3DTranslate(scaleTransform, 0, kVerticalDelta-fabs((progress - 1) * self.frame.size.height/3), 0);
     }
     else
     {
