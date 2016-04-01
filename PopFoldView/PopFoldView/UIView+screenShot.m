@@ -14,9 +14,8 @@
 - (UIImage*)screenshot
 {
     
-    UIGraphicsBeginImageContext(self.frame.size);
-    //UIGraphicsBeginImageContextWithOptions(self.frame.size, NO, 0.0);
-    
+    //UIGraphicsBeginImageContext(self.frame.size);
+    UIGraphicsBeginImageContextWithOptions(self.frame.size, NO, [[UIScreen mainScreen] scale]);
     
     if (UIGraphicsGetCurrentContext()==nil)
     {

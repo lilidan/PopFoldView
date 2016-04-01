@@ -9,15 +9,15 @@
 /* Begin PBXBuildFile section */
 		63B67AA81C24ECCC008DEE8F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67AA71C24ECCC008DEE8F /* main.m */; };
 		63B67AAB1C24ECCC008DEE8F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67AAA1C24ECCC008DEE8F /* AppDelegate.m */; };
-		63B67AAE1C24ECCC008DEE8F /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67AAD1C24ECCC008DEE8F /* ViewController.m */; };
 		63B67AB11C24ECCC008DEE8F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63B67AAF1C24ECCC008DEE8F /* Main.storyboard */; };
 		63B67AB31C24ECCC008DEE8F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 63B67AB21C24ECCC008DEE8F /* Assets.xcassets */; };
 		63B67AB61C24ECCC008DEE8F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 63B67AB41C24ECCC008DEE8F /* LaunchScreen.storyboard */; };
 		63B67AC11C24ECCC008DEE8F /* PopFoldViewTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67AC01C24ECCC008DEE8F /* PopFoldViewTests.m */; };
 		63B67ACC1C24ECCC008DEE8F /* PopFoldViewUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67ACB1C24ECCC008DEE8F /* PopFoldViewUITests.m */; };
-		63B67ADB1C24ECE0008DEE8F /* PopFoldView.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67ADA1C24ECE0008DEE8F /* PopFoldView.m */; };
-		63B67ADE1C252182008DEE8F /* UIView+screenShot.m in Sources */ = {isa = PBXBuildFile; fileRef = 63B67ADD1C252182008DEE8F /* UIView+screenShot.m */; };
-		D6FDA1101C28E7E600D7EF1C /* PopFoldSlideView.m in Sources */ = {isa = PBXBuildFile; fileRef = D6FDA10F1C28E7E600D7EF1C /* PopFoldSlideView.m */; };
+		D640F8F71CAE4C9900217184 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D640F8E21CAE4C9900217184 /* ViewController.m */; };
+		D640F90D1CAE4CAC00217184 /* PopFoldSlideView.m in Sources */ = {isa = PBXBuildFile; fileRef = D640F9081CAE4CAC00217184 /* PopFoldSlideView.m */; };
+		D640F90E1CAE4CAC00217184 /* PopFoldView.m in Sources */ = {isa = PBXBuildFile; fileRef = D640F90A1CAE4CAC00217184 /* PopFoldView.m */; };
+		D640F90F1CAE4CAC00217184 /* UIView+screenShot.m in Sources */ = {isa = PBXBuildFile; fileRef = D640F90C1CAE4CAC00217184 /* UIView+screenShot.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,8 +42,6 @@
 		63B67AA71C24ECCC008DEE8F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		63B67AA91C24ECCC008DEE8F /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		63B67AAA1C24ECCC008DEE8F /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		63B67AAC1C24ECCC008DEE8F /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		63B67AAD1C24ECCC008DEE8F /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		63B67AB01C24ECCC008DEE8F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		63B67AB21C24ECCC008DEE8F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		63B67AB51C24ECCC008DEE8F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -54,12 +52,14 @@
 		63B67AC71C24ECCC008DEE8F /* PopFoldViewUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PopFoldViewUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		63B67ACB1C24ECCC008DEE8F /* PopFoldViewUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PopFoldViewUITests.m; sourceTree = "<group>"; };
 		63B67ACD1C24ECCC008DEE8F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		63B67AD91C24ECE0008DEE8F /* PopFoldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopFoldView.h; sourceTree = "<group>"; };
-		63B67ADA1C24ECE0008DEE8F /* PopFoldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopFoldView.m; sourceTree = "<group>"; };
-		63B67ADC1C252182008DEE8F /* UIView+screenShot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+screenShot.h"; sourceTree = "<group>"; };
-		63B67ADD1C252182008DEE8F /* UIView+screenShot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+screenShot.m"; sourceTree = "<group>"; };
-		D6FDA10E1C28E7E600D7EF1C /* PopFoldSlideView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopFoldSlideView.h; sourceTree = "<group>"; };
-		D6FDA10F1C28E7E600D7EF1C /* PopFoldSlideView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopFoldSlideView.m; sourceTree = "<group>"; };
+		D640F8E11CAE4C9900217184 /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		D640F8E21CAE4C9900217184 /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		D640F9071CAE4CAC00217184 /* PopFoldSlideView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopFoldSlideView.h; sourceTree = "<group>"; };
+		D640F9081CAE4CAC00217184 /* PopFoldSlideView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopFoldSlideView.m; sourceTree = "<group>"; };
+		D640F9091CAE4CAC00217184 /* PopFoldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PopFoldView.h; sourceTree = "<group>"; };
+		D640F90A1CAE4CAC00217184 /* PopFoldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PopFoldView.m; sourceTree = "<group>"; };
+		D640F90B1CAE4CAC00217184 /* UIView+screenShot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+screenShot.h"; sourceTree = "<group>"; };
+		D640F90C1CAE4CAC00217184 /* UIView+screenShot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+screenShot.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,15 +112,10 @@
 			children = (
 				63B67AA91C24ECCC008DEE8F /* AppDelegate.h */,
 				63B67AAA1C24ECCC008DEE8F /* AppDelegate.m */,
-				63B67AAC1C24ECCC008DEE8F /* ViewController.h */,
-				63B67AAD1C24ECCC008DEE8F /* ViewController.m */,
-				D6FDA10E1C28E7E600D7EF1C /* PopFoldSlideView.h */,
-				D6FDA10F1C28E7E600D7EF1C /* PopFoldSlideView.m */,
-				63B67AD91C24ECE0008DEE8F /* PopFoldView.h */,
-				63B67ADA1C24ECE0008DEE8F /* PopFoldView.m */,
-				63B67ADC1C252182008DEE8F /* UIView+screenShot.h */,
-				63B67ADD1C252182008DEE8F /* UIView+screenShot.m */,
 				63B67AAF1C24ECCC008DEE8F /* Main.storyboard */,
+				D640F9061CAE4CAC00217184 /* PopFoldView */,
+				D640F8E11CAE4C9900217184 /* ViewController.h */,
+				D640F8E21CAE4C9900217184 /* ViewController.m */,
 				63B67AB21C24ECCC008DEE8F /* Assets.xcassets */,
 				63B67AB41C24ECCC008DEE8F /* LaunchScreen.storyboard */,
 				63B67AB71C24ECCC008DEE8F /* Info.plist */,
@@ -153,6 +148,19 @@
 				63B67ACD1C24ECCC008DEE8F /* Info.plist */,
 			);
 			path = PopFoldViewUITests;
+			sourceTree = "<group>";
+		};
+		D640F9061CAE4CAC00217184 /* PopFoldView */ = {
+			isa = PBXGroup;
+			children = (
+				D640F9071CAE4CAC00217184 /* PopFoldSlideView.h */,
+				D640F9081CAE4CAC00217184 /* PopFoldSlideView.m */,
+				D640F9091CAE4CAC00217184 /* PopFoldView.h */,
+				D640F90A1CAE4CAC00217184 /* PopFoldView.m */,
+				D640F90B1CAE4CAC00217184 /* UIView+screenShot.h */,
+				D640F90C1CAE4CAC00217184 /* UIView+screenShot.m */,
+			);
+			path = PopFoldView;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -285,12 +293,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				63B67AAE1C24ECCC008DEE8F /* ViewController.m in Sources */,
-				63B67ADE1C252182008DEE8F /* UIView+screenShot.m in Sources */,
+				D640F90E1CAE4CAC00217184 /* PopFoldView.m in Sources */,
+				D640F90F1CAE4CAC00217184 /* UIView+screenShot.m in Sources */,
+				D640F8F71CAE4C9900217184 /* ViewController.m in Sources */,
+				D640F90D1CAE4CAC00217184 /* PopFoldSlideView.m in Sources */,
 				63B67AAB1C24ECCC008DEE8F /* AppDelegate.m in Sources */,
 				63B67AA81C24ECCC008DEE8F /* main.m in Sources */,
-				63B67ADB1C24ECE0008DEE8F /* PopFoldView.m in Sources */,
-				D6FDA1101C28E7E600D7EF1C /* PopFoldSlideView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

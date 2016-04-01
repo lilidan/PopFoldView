@@ -25,8 +25,8 @@ typedef NS_ENUM(NSUInteger, PopFoldViewGo)  //只在中途改变，只在开始�
 @protocol PopFoldViewDelegate <NSObject>
 
 @optional
-- (void)popFoldView:(UIView *)view WillChange:(BOOL)show;
-- (void)popFoldView:(UIView *)view DidChange:(BOOL)show;
+- (void)popFoldView:(UIView *)view willChange:(BOOL)show;
+- (void)popFoldView:(UIView *)view didChange:(BOOL)show;
 
 @end
 
@@ -46,5 +46,6 @@ typedef NS_ENUM(NSUInteger, PopFoldViewGo)  //只在中途改变，只在开始�
 
 - (void)toggle:(BOOL)toCover;
 - (void)back;
+- (void)back:(BOOL)shouldBounce;
 
 @end

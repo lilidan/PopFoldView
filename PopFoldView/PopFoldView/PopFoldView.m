@@ -21,21 +21,25 @@
 @property (nonatomic,strong) UIImage* detailBottomImage;
 @property (nonatomic,strong) UIImage* coverImage;
 
-@property (nonatomic,strong) CALayer* detailTopLayer;
+@property (nonatomic,strong) UIView* reverseTopView;
 
-@property (nonatomic,assign) BOOL panEnabled;
+@property (nonatomic,assign) BOOL startEnabled;
 
 @property (nonatomic,assign) CGFloat changingProgress;
 @property (nonatomic,assign) NSInteger isAnimatingCount;
+
+@property (nonatomic,assign) CGFloat originalTransY;
+@property (nonatomic,assign) CGFloat originalDistanceTransY;
 
 @end
 
 @implementation PopFoldView
 
-const CGFloat kScaleRatio = 0.2;
-const CGFloat kVerticalDelta = -50;
+const CGFloat kScaleRatio = 0.1;
+const CGFloat kVerticalDelta = -20;
 const CGFloat kTriggerDelta = 70;
 const CGFloat kDetailCoverSeperatorConstant = 0.43;
+const CGFloat kCornerRadius = 4;
 
 - (void)initialize
 {
@@ -44,14 +48,18 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     _topView = [[UIView alloc] initWithFrame:self.bounds];
     _bottomView = [[UIView alloc] initWithFrame:self.bounds];
     
+    self.coverContentView.layer.cornerRadius = kCornerRadius;
+    self.coverContentView.layer.masksToBounds = YES;
+    self.detailContentView.layer.cornerRadius = kCornerRadius;
+    self.detailContentView.layer.masksToBounds = YES;
+    
     _goTo = PopFoldViewStatusGoCover;
     _status = PopFoldViewStatusCover;
     
-    _detailTopLayer = [CALayer layer];
-    self.detailTopLayer.transform = CATransform3DMakeRotation(M_PI, 1, 0, 0);
-    self.detailTopLayer.hidden = YES;
-    [self.topView.layer addSublayer:self.detailTopLayer];
-    
+    _reverseTopView = [UIView new];
+    self.reverseTopView.hidden = YES;
+    self.reverseTopView.transform = CGAffineTransformRotate(CGAffineTransformMakeScale(-1, 1), M_PI);
+    [self.topView addSubview:self.reverseTopView];
     [self addSubview:self.coverContentView];
     
     CATransform3D rotationAndPerspectiveTransform = CATransform3DIdentity;
@@ -66,30 +74,75 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     
     if (panGr.state == UIGestureRecognizerStateBegan)
     {
-        [self start];
-        _changingProgress = self.currentProgress;
+        
     }
     else if (panGr.state == UIGestureRecognizerStateChanged)
     {
-        CGPoint translation = [panGr translationInView:self];
-        CGFloat change = translation.y/self.frame.size.height;
+        if (self.status == PopFoldViewStatusCover || self.status == PopFoldViewStatusDetail)
+        {
+            [self start];
+            _changingProgress = self.currentProgress;
+            self.originalTransY = [panGr translationInView:self].y;
+            self.startEnabled = NO;
+            self.originalDistanceTransY = [panGr translationInView:self].y;
+        }
+        
+        CGFloat transY = [panGr translationInView:self].y - self.originalTransY;
+        CGFloat change = transY/self.frame.size.height;
         CGFloat progress = self.changingProgress - change;
-        [self refreshProgress:progress animated:YES];
+        
+        //progress 在1周围波动时的start和end
+        if (self.currentProgress > 1.0 && progress < 1.0 && self.startEnabled)
+        {
+            self.startEnabled = NO;
+            self.status = PopFoldViewStatusDetail;
+            [self start];
+            self.status = PopFoldViewStatusMovingFromCover;
+            self.originalDistanceTransY = [panGr translationInView:self].y;
+        }
+        else if (self.currentProgress < 1.0 && progress > 1.0)
+        {
+            self.startEnabled = YES;
+            self.goTo = PopFoldViewStatusGoDetail;
+            [self end];
+            self.status = PopFoldViewStatusMovingFromCover;
+        }
+        
+        [self refreshProgress:progress scaled:YES];
     }
     else
     {
-        CGPoint translation = [panGr translationInView:self];
-        if (fabs(translation.y) < kTriggerDelta)
+        self.startEnabled = YES;
+        self.originalTransY = 0;
+        
+        //如果手势结束时progress > 1
+        if (self.currentProgress >= 1)
+        {
+            self.currentProgress = 1.0;
+            self.status = PopFoldViewStatusDetail;
+            
+            //如果是从PopFoldViewStatusDetail，progress = 1时开始的,需要end。
+            if (!self.detailContentView.superview)
+            {
+                self.goTo = PopFoldViewStatusGoDetail;
+                [self end];
+            }
+            return;
+        }
+        
+        //用初始值校正transY
+        CGFloat transY = [panGr translationInView:self].y - self.originalDistanceTransY;
+        if (fabs(transY) < kTriggerDelta)
         {
             [self back];
         }
         else
         {
-            if (self.goTo == PopFoldViewStatusGoCover && translation.y < 0)
+            if (self.goTo == PopFoldViewStatusGoCover && transY < 0)
             {
                 self.goTo = PopFoldViewStatusGoDetail;
             }
-            if (self.goTo == PopFoldViewStatusGoDetail && translation.y > 0)
+            if (self.goTo == PopFoldViewStatusGoDetail && transY > 0)
             {
                 self.goTo = PopFoldViewStatusGoCover;
             }
@@ -99,7 +152,7 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     }
 }
 
-- (void)refreshProgress:(CGFloat)progress animated:(BOOL)animated
+- (void)refreshProgress:(CGFloat)progress scaled:(BOOL)scaled
 {
     if (progress < 0)
     {
@@ -107,13 +160,13 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     }
     else if (progress > 1)
     {
-        CGFloat scale = (1.0 + kScaleRatio);
-        CATransform3D scaleTransform = CATransform3DMakeScale(scale,scale, 1.0);
-        self.layer.transform = CATransform3DTranslate(scaleTransform, 0, kVerticalDelta-fabs((progress - 1) * self.frame.size.height/3), 0);
+//        CGFloat scale = (1.0 + kScaleRatio);
+//        CATransform3D scaleTransform = CATransform3DMakeScale(scale,scale, 1.0);
+//        self.layer.transform = CATransform3DTranslate(scaleTransform, 0, kVerticalDelta-fabs((progress - 1) * self.frame.size.height/3), 0);
     }
     else
     {
-        if (!animated)
+        if (scaled)
         {
             CGFloat scale = 1.0 + kScaleRatio * progress;
             CATransform3D scaleTransform = CATransform3DMakeScale(scale,scale,1.0);
@@ -123,13 +176,13 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
         self.topView.layer.transform = transform;
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
-        self.detailTopLayer.hidden = (progress < kDetailCoverSeperatorConstant);
+        self.reverseTopView.hidden = (progress < kDetailCoverSeperatorConstant);
         [CATransaction commit];
     }
     _currentProgress = progress;
 }
 
-#pragma mark - helper
+#pragma mark - actions
 
 - (void)bounce
 {
@@ -150,18 +203,26 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
                      }];
 }
 
-- (void)back
+- (void)back:(BOOL)shouldBounce
 {
     BOOL toCover = (self.goTo == PopFoldViewStatusGoCover);
     [UIView animateWithDuration:0.2
                           delay:0
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                             [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
+                             [self refreshProgress:(!toCover ? 1.0 : 0) scaled:shouldBounce];
                      } completion:^(BOOL finished) {
                              [self end];
                      }];
-    [self bounce];
+    if (shouldBounce)
+    {
+        [self bounce];
+    }
+}
+
+- (void)back
+{
+    [self back:YES];
 }
 
 - (void)forward
@@ -182,22 +243,22 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
                               delay:0
                             options:UIViewAnimationOptionCurveLinear
                          animations:^{
-                             [self refreshProgress:(!toCover ? kDetailCoverSeperatorConstant - 0.001 : kDetailCoverSeperatorConstant + 0.001) animated:NO];
+                             [self refreshProgress:(!toCover ? kDetailCoverSeperatorConstant - 0.001 : kDetailCoverSeperatorConstant + 0.001) scaled:YES];
                          }
                          completion:^(BOOL finished) {
                              if (finished)
                              {
                                  [CATransaction begin];
                                  [CATransaction setDisableActions:YES];
-                                 self.detailTopLayer.hidden = toCover;
+                                 self.reverseTopView.hidden = toCover;
                                  [CATransaction commit];
                                  [UIView animateWithDuration:afterDuration
                                                        delay:0
                                                      options:UIViewAnimationOptionCurveLinear
                                                   animations:^{
-                                                      [self refreshProgress:(!toCover ? 1.0 : 0) animated:YES];
+                                                      [self refreshProgress:(!toCover ? 1.0 : 0) scaled:YES];
                                                   } completion:^(BOOL finished) {
-                                                          [self end];
+                                                      [self end];
                                                   }];
                                  [self bounce];
                              }
@@ -207,6 +268,10 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
 
 - (void)start
 {
+    self.coverImage = [self.coverContentView screenshot];
+    UIImage *image = [self.detailContentView screenshot];
+    [self seperateImage:image];
+    
     BOOL isDetail = (self.status == PopFoldViewStatusDetail);
     BOOL isCover = (self.status == PopFoldViewStatusCover);
     if (isCover || isDetail)
@@ -215,12 +280,16 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
         [originView removeFromSuperview];
         [self addSubview:self.bottomView];
         [self addSubview:self.topView];
-        [self.detailTopLayer setContents:(__bridge id)self.detailTopImage.CGImage];
+        [self.reverseTopView.layer setContents:(__bridge id)self.detailTopImage.CGImage];
         [self.topView.layer setContents:(__bridge id)self.coverImage.CGImage];
         [self.bottomView.layer setContents:(__bridge id)self.detailBottomImage.CGImage];
         _status = ( isCover ? PopFoldViewStatusMovingFromCover : PopFoldViewStatusMovingFromDetail );
     }
     self.isAnimatingCount ++;
+    if ([self.delegate respondsToSelector:@selector(popFoldView:willChange:)])
+    {
+        [self.delegate popFoldView:self willChange:isCover];
+    }
 }
 
 - (void)end
@@ -237,16 +306,19 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     [self.bottomView removeFromSuperview];
     [self.topView removeFromSuperview];
     _status = (toCover ? PopFoldViewStatusCover : PopFoldViewStatusDetail);
-    if ([self.delegate respondsToSelector:@selector(popFoldView:DidChange:)])
+    if ([self.delegate respondsToSelector:@selector(popFoldView:didChange:)])
     {
-        [self.delegate popFoldView:self DidChange:!toCover];
+        [self.delegate popFoldView:self didChange:!toCover];
     }
 }
 
 - (void)toggle:(BOOL)toCover
 {
-    
+    [self start];
+    self.goTo = (toCover ? PopFoldViewStatusGoCover : PopFoldViewStatusGoDetail);
+    [self forward];
 }
+
 
 #pragma mark - setter
 
@@ -258,8 +330,9 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     }
     
     contentView.frame = self.coverContentView.bounds;
+    [contentView layoutIfNeeded];
     [self.coverContentView addSubview:contentView];
-    self.coverImage = [self.coverContentView screenshot];
+    [self.coverContentView layoutIfNeeded];
 }
 
 - (void)setDetailContent:(UIView *)contentView
@@ -271,8 +344,7 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
 
     contentView.frame = self.detailContentView.bounds;
     [self.detailContentView addSubview:contentView];
-    UIImage *image = [self.detailContentView screenshot];
-    [self seperateImage:image];
+    [self.detailContentView layoutIfNeeded];
 }
 
 - (void)setFrame:(CGRect)frame
@@ -281,19 +353,47 @@ const CGFloat kDetailCoverSeperatorConstant = 0.43;
     self.detailContentView.frame = CGRectMake(0, -self.frame.size.height, self.frame.size.width, self.frame.size.height * 2);
     self.coverContentView.frame = self.bounds;
     self.topView.frame = self.bounds;
-    self.detailTopLayer.frame = self.topView.bounds;
+    self.reverseTopView.frame = self.topView.bounds;
     self.bottomView.frame = self.bounds;
+}
+
+- (UIView *)hitTest:(CGPoint)point withViewTag:(NSInteger)tag
+{
+    UIView *view = [self viewWithTag:tag];
+    if (view && view.userInteractionEnabled)
+    {
+        CGRect frame = [view.superview convertRect:view.frame toView:self];
+        if (CGRectContainsPoint(frame, point))
+        {
+            return view;
+        }
+    }
+    return nil;
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
+{
+    for (NSNumber *tag in @[@(201),@(202),@(203),@(200)])
+    {
+        UIView *view = [self hitTest:point withViewTag:tag.integerValue];
+        if (view)
+        {
+            return view;
+        }
+    }
+    return [super hitTest:point withEvent:event];
 }
 
 #pragma mark - helper
 - (void)seperateImage:(UIImage*)image
 {
     CGImageRef imageRef = CGImageCreateWithImageInRect([image CGImage], CGRectMake(0, image.size.height*image.scale/2, image.size.width*image.scale, image.size.height*image.scale/2));
-    self.detailBottomImage = [[UIImage alloc] initWithCGImage:imageRef];
-    CFRelease(imageRef);
-    
     CGImageRef imageRef2 = CGImageCreateWithImageInRect([image CGImage], CGRectMake(0, 0, image.size.width*image.scale, image.size.height*image.scale/2));
+    
     self.detailTopImage = [[UIImage alloc] initWithCGImage:imageRef2];
+    self.detailBottomImage = [[UIImage alloc] initWithCGImage:imageRef];
+    
+    CFRelease(imageRef);
     CFRelease(imageRef2);
 }
 

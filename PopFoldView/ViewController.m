@@ -1,53 +1,95 @@
 //
-//  ViewController.m
-//  PopFoldView
+//  FellowshipViewController.m
+//  Stockcraft
 //
-//  Created by sgcy on 15/12/19.
-//  Copyright © 2015年 sgcy. All rights reserved.
+//  Created by sgcy on 16/1/11.
+//  Copyright © 2016年 Guosen. All rights reserved.
 //
 
 #import "ViewController.h"
+
 #import "PopFoldSlideView.h"
-@interface ViewController ()
+
+#define TEXT_ATTRIBUTE(COLOR,SIZE) @{NSFontAttributeName:[UIFont systemFontOfSize:SIZE],NSForegroundColorAttributeName : COLOR}
+#define NAVIGATION_BAR_HEIGHT 64
+#define TAB_BAR_HEIGHT 80
+#define SCREEN_WIDTH ([UIScreen mainScreen].bounds.size.width)
+#define SCREEN_HEIGHT ([UIScreen mainScreen].bounds.size.height)
+
+@interface ViewController () <PopFoldSlideViewDelegate>
+
+@property (nonatomic,strong) PopFoldSlideView *slideView;
 
 @end
 
 @implementation ViewController
+
+- (void)viewDidLoad
 {
-    PopFoldSlideView *hostView;
-    CALayer *transformationLayer;
+    [super viewDidLoad];
+    self.view.layer.masksToBounds = YES;
+    self.view.backgroundColor = [UIColor lightGrayColor];
+    self.extendedLayoutIncludesOpaqueBars = YES;
+    self.navigationController.navigationBar.titleTextAttributes = TEXT_ATTRIBUTE([UIColor whiteColor], 18);
+    [self.navigationController.navigationBar setBarTintColor:[UIColor lightGrayColor]];
+    [self.navigationController.navigationBar setTranslucent:NO];
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage new]
+                                                 forBarPosition:UIBarPositionAny
+                                                     barMetrics:UIBarMetricsDefault];
+    [self.navigationController.navigationBar setShadowImage:[UIImage new]];
+    self.navigationController.navigationBar.tintColor = [UIColor whiteColor];
+    
+    [self setUpViews];
+    [self setUpSlideView];
+    
 }
 
-- (void)viewDidLoad {
-    [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
-    hostView = [[PopFoldSlideView alloc] init];
-    hostView.frame = self.view.bounds;
-    [self.view addSubview:hostView];
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+}
+
+- (void)setUpViews
+{
     
-    NSMutableArray *array1 = [NSMutableArray new];
-    NSMutableArray *array2 = [NSMutableArray new];
+    _slideView = [[PopFoldSlideView alloc] init];
+    self.slideView.delegate = self;
+    self.slideView.frame = CGRectMake(0, NAVIGATION_BAR_HEIGHT, SCREEN_WIDTH,SCREEN_HEIGHT - NAVIGATION_BAR_HEIGHT - 50);
+    [self.view addSubview:self.slideView];
+}
 
-    for (int i = 0; i < 3; i++)
+- (void)setUpSlideView
+{
+    NSMutableArray *coverViews = [[NSMutableArray alloc] init];
+    NSMutableArray *detailViews = [[NSMutableArray alloc] init];
+    NSArray *coverColors = @[[UIColor redColor],[UIColor blueColor],[UIColor yellowColor]];
+    NSArray *detailColors = @[[UIColor purpleColor],[UIColor greenColor],[UIColor orangeColor]];
+    
+    for (int i = 0 ; i < 3; i++)
     {
-        UIView *cover = [[UIView alloc] init];
-        cover.backgroundColor = [UIColor yellowColor];
-        UILabel *view1 = [[UILabel alloc] initWithFrame:CGRectMake(50, 50, 100, 100)];
-        view1.backgroundColor = [UIColor redColor];
-        view1.text = @"1";
-        [cover addSubview:view1];
-        UIView *detail = [[UIView alloc] init];
-        detail.backgroundColor = [UIColor blueColor];
-        UILabel *view2 = [[UILabel alloc] initWithFrame:CGRectMake(50, 150, 100, 100)];
-        view2.backgroundColor = [UIColor greenColor];
-        view2.text = @"2";
-
-        [detail addSubview:view2];
-        [array1 addObject:cover];
-        [array2 addObject:detail];
+        UIView *coverView = [[UIView alloc] init];
+        coverView.backgroundColor = coverColors[i];
+        [coverViews addObject:coverView];
+        UIView *detailView = [[UIView alloc] init];
+        detailView.backgroundColor = detailColors[i];
+        [detailViews addObject:detailView];
     }
-    [hostView setCoverContentViews:array1];
-    [hostView setDetailContentViews:array2];
+    
+    [self.slideView setCoverContentViews:[coverViews copy]];
+    [self.slideView setDetailContentViews:[detailViews copy]];
+
+}
+
+#pragma mark - delegate
+
+
+- (void)popFoldSlideView:(NSInteger)index willChange:(BOOL)show
+{
+
+}
+
+- (void)popFoldSlideView:(NSInteger)index didChange:(BOOL)show
+{
     
 }
 

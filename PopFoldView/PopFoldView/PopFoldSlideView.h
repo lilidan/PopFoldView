@@ -17,6 +17,17 @@ typedef NS_ENUM(NSUInteger, PopFoldPanStatus)
     PopFoldPanStatusHorizonal = 2
 };
 
+
+@protocol PopFoldSlideViewDelegate <NSObject>
+
+- (void)popFoldSlideView:(NSInteger)index willChange:(BOOL)show;
+- (void)popFoldSlideView:(NSInteger)index didChange:(BOOL)show;
+
+@end
+
+extern NSString *const PopFoldSlideViewWillSlideNotification;
+extern NSString *const PopFoldSlideViewDidSlideNotification;
+
 @interface PopFoldSlideView : UIView
 
 @property (nonatomic,assign) NSInteger numberOfCells;  // n >= 3
@@ -24,5 +35,7 @@ typedef NS_ENUM(NSUInteger, PopFoldPanStatus)
 @property (nonatomic,strong) NSArray<__kindof UIView *> *detailContentViews;
 
 @property (nonatomic,assign) PopFoldPanStatus panStatus;
+
+@property (nonatomic,weak) id<PopFoldSlideViewDelegate> delegate;
 
 @end

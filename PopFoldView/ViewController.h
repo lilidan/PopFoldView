@@ -1,15 +1,13 @@
 //
-//  ViewController.h
-//  PopFoldView
+//  FellowshipViewController.h
+//  Stockcraft
 //
-//  Created by sgcy on 15/12/19.
-//  Copyright © 2015年 sgcy. All rights reserved.
+//  Created by sgcy on 16/1/11.
+//  Copyright © 2016年 Guosen. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 
 @interface ViewController : UIViewController
 
-
 @end
-
